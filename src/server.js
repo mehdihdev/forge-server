@@ -10,6 +10,8 @@ const {
   SUPABASE_PUBLISHABLE_KEY,
   SUPABASE_SECRET_KEY,
   SUPABASE_SERVICE_ROLE_KEY,
+  GITHUB_CLIENT_ID,
+  GITHUB_CLIENT_SECRET,
   SESSION_SECRET = "dev-secret",
   PORT = 3000
 } = process.env;
@@ -157,6 +159,36 @@ const formatRepoDate = (isoString) => {
   })}`;
 };
 
+const refreshGithubToken = async (refreshToken) => {
+  if (!refreshToken || !GITHUB_CLIENT_ID || !GITHUB_CLIENT_SECRET) return null;
+
+  const response = await fetch("https://github.com/login/oauth/access_token", {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      client_id: GITHUB_CLIENT_ID,
+      client_secret: GITHUB_CLIENT_SECRET,
+      grant_type: "refresh_token",
+      refresh_token: refreshToken
+    })
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const data = await response.json();
+  if (!data?.access_token) return null;
+
+  return {
+    access_token: data.access_token,
+    refresh_token: data.refresh_token || refreshToken
+  };
+};
+
 const fetchGithubRepos = async (token) => {
   if (!token) return [];
 
@@ -172,7 +204,9 @@ const fetchGithubRepos = async (token) => {
   );
 
   if (!response.ok) {
-    throw new Error(`GitHub API error (${response.status})`);
+    const error = new Error(`GitHub API error (${response.status})`);
+    error.status = response.status;
+    throw error;
   }
 
   const repos = await response.json();
@@ -189,6 +223,36 @@ const fetchGithubRepos = async (token) => {
   }));
 };
 
+const fetchAllGithubRepos = async (token) => {
+  if (!token) return [];
+  const response = await fetch(
+    "https://api.github.com/user/repos?per_page=100&sort=updated&affiliation=owner,collaborator,organization_member",
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github+json",
+        "User-Agent": "solus-labs-app"
+      }
+    }
+  );
+
+  if (!response.ok) {
+    const error = new Error(`GitHub API error (${response.status})`);
+    error.status = response.status;
+    throw error;
+  }
+
+  const repos = await response.json();
+  return repos
+    .map((repo) => ({
+      name: repo.name,
+      owner: repo.owner?.login,
+      full_name: repo.full_name,
+      private: repo.private
+    }))
+    .sort((a, b) => a.full_name.localeCompare(b.full_name));
+};
+
 const fetchRepoDetails = async (token, owner, repo) => {
   const response = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
     headers: {
@@ -199,7 +263,9 @@ const fetchRepoDetails = async (token, owner, repo) => {
   });
 
   if (!response.ok) {
-    throw new Error(`GitHub API error (${response.status})`);
+    const error = new Error(`GitHub API error (${response.status})`);
+    error.status = response.status;
+    throw error;
   }
 
   return response.json();
@@ -222,7 +288,9 @@ const fetchErrorsForge = async (token, owner, repo) => {
   }
 
   if (!response.ok) {
-    throw new Error(`GitHub API error (${response.status})`);
+    const error = new Error(`GitHub API error (${response.status})`);
+    error.status = response.status;
+    throw error;
   }
 
   const data = await response.json();
@@ -280,6 +348,25 @@ const storeGithubTokens = async (userId, provider_token, provider_refresh_token)
     },
     { onConflict: "user_id" }
   );
+};
+
+const refreshTokenIfNeeded = async (sessionData) => {
+  if (!sessionData?.githubToken || !sessionData?.user?.id) return null;
+
+  const stored = await loadGithubTokens(sessionData.user.id);
+  if (!stored?.provider_refresh_token) return null;
+
+  const refreshed = await refreshGithubToken(stored.provider_refresh_token);
+  if (!refreshed?.access_token) return null;
+
+  await storeGithubTokens(
+    sessionData.user.id,
+    refreshed.access_token,
+    refreshed.refresh_token
+  );
+
+  sessionData.githubToken = refreshed.access_token;
+  return refreshed.access_token;
 };
 
 const clearGithubTokens = async (userId) => {
@@ -489,15 +576,55 @@ app.get("/home", async (req, res) => {
     try {
       req.session.githubRepos = await fetchGithubRepos(req.session.githubToken);
     } catch (err) {
-      req.session.githubRepos = [];
-      req.session.githubError = err?.message
-        ? `We connected to GitHub, but couldn't load repos yet (${err.message}).`
-        : "We connected to GitHub, but couldn't load repos yet.";
+      if (err?.status === 401) {
+        const refreshed = await refreshTokenIfNeeded(req.session);
+        if (refreshed) {
+          try {
+            req.session.githubRepos = await fetchGithubRepos(refreshed);
+          } catch (retryErr) {
+            req.session.githubRepos = [];
+            req.session.githubError = `We connected to GitHub, but couldn't load repos yet (${retryErr.message}).`;
+          }
+        } else {
+          req.session.githubRepos = [];
+          req.session.githubError =
+            "GitHub token expired. Please reconnect GitHub to continue.";
+        }
+      } else {
+        req.session.githubRepos = [];
+        req.session.githubError = err?.message
+          ? `We connected to GitHub, but couldn't load repos yet (${err.message}).`
+          : "We connected to GitHub, but couldn't load repos yet.";
+      }
     }
   }
 
   const githubProjects = req.session.githubRepos || [];
   const githubError = req.session.githubError || "";
+  let githubRepoOptions = req.session.githubRepoOptions || [];
+
+  if (githubConnected && req.session.githubToken && !githubRepoOptions.length) {
+    try {
+      githubRepoOptions = await fetchAllGithubRepos(req.session.githubToken);
+      req.session.githubRepoOptions = githubRepoOptions;
+    } catch (err) {
+      if (err?.status === 401) {
+        const refreshed = await refreshTokenIfNeeded(req.session);
+        if (refreshed) {
+          try {
+            githubRepoOptions = await fetchAllGithubRepos(refreshed);
+            req.session.githubRepoOptions = githubRepoOptions;
+          } catch (retryErr) {
+            req.session.githubRepoOptions = [];
+          }
+        } else {
+          req.session.githubRepoOptions = [];
+        }
+      } else {
+        req.session.githubRepoOptions = [];
+      }
+    }
+  }
 
   const body = `
     ${navbar({ sessionData: req.session, showAuth: false, showLinks: false })}
@@ -528,6 +655,29 @@ app.get("/home", async (req, res) => {
           ${
             githubError
               ? `<div class="mt-4 rounded-2xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">${githubError}</div>`
+              : ""
+          }
+          ${
+            githubConnected && githubRepoOptions.length
+              ? `
+                <form method="GET" action="/repo/select" class="mt-6 grid gap-3 md:grid-cols-[1fr_auto]">
+                  <div>
+                    <label class="block text-xs uppercase tracking-[0.2em] text-slate-400">Jump to any repo</label>
+                    <select name="full_name" required class="mt-2 w-full rounded-xl border border-white/10 bg-slate-900/70 px-4 py-3 text-sm text-white">
+                      <option value="" disabled selected>Select a repository</option>
+                      ${githubRepoOptions
+                        .map(
+                          (repo) =>
+                            `<option value="${repo.full_name}">${repo.full_name}${repo.private ? " (private)" : ""}</option>`
+                        )
+                        .join("")}
+                    </select>
+                  </div>
+                  <div class="flex items-end">
+                    <button class="w-full rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:-translate-y-0.5 hover:shadow-lg">Open</button>
+                  </div>
+                </form>
+              `
               : ""
           }
           ${
@@ -694,6 +844,24 @@ app.get("/settings", (req, res) => {
   res.send(layout({ title: "Settings | Solus Labs", body }));
 });
 
+app.get("/repo/select", (req, res) => {
+  if (!requireAuth(req, res)) return;
+
+  const fullName = String(req.query.full_name || "");
+  if (!fullName || !fullName.includes("/")) {
+    res.redirect("/home");
+    return;
+  }
+
+  const [owner, repo] = fullName.split("/");
+  if (!owner || !repo) {
+    res.redirect("/home");
+    return;
+  }
+
+  res.redirect(`/repo/${owner}/${repo}`);
+});
+
 app.get("/repo/:owner/:repo", async (req, res) => {
   if (!requireAuth(req, res)) return;
 
@@ -718,8 +886,91 @@ app.get("/repo/:owner/:repo", async (req, res) => {
   }
 
   try {
-    const repoData = await fetchRepoDetails(req.session.githubToken, owner, repo);
-    const errorsForge = await fetchErrorsForge(req.session.githubToken, owner, repo);
+    let token = req.session.githubToken;
+    try {
+      const repoData = await fetchRepoDetails(token, owner, repo);
+      const errorsForge = await fetchErrorsForge(token, owner, repo);
+
+      const entriesMarkup =
+        errorsForge.status === "ok"
+          ? errorsForge.entries
+              .map(
+                (entry, index) => `
+                  <div class="rounded-2xl border border-white/10 bg-slate-950/70 p-6">
+                    <p class="text-xs uppercase tracking-[0.2em] text-emerald-200">Entry ${index + 1}</p>
+                    <h3 class="mt-3 text-sm font-semibold text-white">Problem</h3>
+                    <p class="mt-2 text-sm text-slate-300">${entry.problem || "No problem text provided."}</p>
+                    <h3 class="mt-5 text-sm font-semibold text-white">Solution</h3>
+                    <p class="mt-2 text-sm text-slate-300">${entry.solution || "No solution text provided."}</p>
+                  </div>
+                `
+              )
+              .join("")
+          : "";
+
+      const statusMessage =
+        errorsForge.status === "missing"
+          ? "No errors.forge file was found. Run the Forge-RDE VSCode Extension to generate one."
+          : errorsForge.status === "empty"
+            ? "errors.forge exists but has no contents yet. It will be filled in as your AI Agent helps you throughout your project."
+            : errorsForge.status === "invalid"
+              ? "errors.forge exists but could not be parsed as JSON."
+              : "";
+
+      const body = `
+        ${navbar({ sessionData: req.session, showAuth: false, showLinks: false })}
+        <main class="mx-auto w-full max-w-5xl px-6 py-16">
+          <div class="flex flex-col gap-8 rounded-3xl border border-white/10 bg-white/5 p-10">
+            <div>
+              <p class="text-sm uppercase tracking-[0.2em] text-emerald-300">Repository</p>
+              <h1 class="mt-3 text-3xl font-semibold text-white">${repoData.full_name}</h1>
+              <p class="mt-3 text-slate-300">${repoData.description || "No description provided."}</p>
+              <div class="mt-6 flex flex-wrap items-center gap-4 text-xs text-slate-400">
+                <span class="rounded-full border border-white/10 px-3 py-1">${repoData.private ? "Private" : "Public"}</span>
+                <span>${repoData.language || "Unknown language"}</span>
+                <span>★ ${repoData.stargazers_count || 0}</span>
+                <span>⑂ ${repoData.forks_count || 0}</span>
+                <span>Updated ${new Date(repoData.updated_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+              </div>
+            </div>
+
+            <section class="rounded-3xl border border-white/10 bg-slate-950/70 p-8">
+              <div class="flex items-center justify-between">
+                <h2 class="text-xl font-semibold text-white">errors.forge</h2>
+                <span class="text-xs uppercase tracking-[0.2em] text-slate-400">.rde/errors.forge</span>
+              </div>
+              ${
+                statusMessage
+                  ? `<div class="mt-4 rounded-2xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">${statusMessage}</div>`
+                  : ""
+              }
+              ${
+                errorsForge.status === "ok"
+                  ? `<div class="mt-6 grid gap-4">${entriesMarkup}</div>`
+                  : ""
+              }
+            </section>
+          </div>
+        </main>
+      `;
+
+      res.send(layout({ title: `${repoData.full_name} | Solus Labs`, body }));
+      return;
+    } catch (err) {
+      if (err?.status !== 401) {
+        throw err;
+      }
+    }
+
+    const refreshed = await refreshTokenIfNeeded(req.session);
+    if (!refreshed) {
+      res.redirect("/home?message=GitHub%20token%20expired.%20Reconnect%20GitHub%20to%20continue");
+      return;
+    }
+
+    token = refreshed;
+    const repoData = await fetchRepoDetails(token, owner, repo);
+    const errorsForge = await fetchErrorsForge(token, owner, repo);
 
     const entriesMarkup =
       errorsForge.status === "ok"
