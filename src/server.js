@@ -17,6 +17,7 @@ const {
 } = process.env;
 
 const APP_URL = process.env.APP_URL || `http://localhost:${PORT}`;
+const EMAIL_CONFIRM_REDIRECT = `${APP_URL}/auth/confirm`;
 const apiKey = SUPABASE_SECRET_KEY || SUPABASE_PUBLISHABLE_KEY || "";
 
 if (!SUPABASE_URL || !apiKey) {
@@ -75,6 +76,29 @@ const layout = ({ title, body }) => `<!doctype html>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>${title}</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(18px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .fade-up {
+        opacity: 0;
+        animation: fadeUp 700ms ease-out forwards;
+      }
+      .fade-up.delay-1 { animation-delay: 120ms; }
+      .fade-up.delay-2 { animation-delay: 240ms; }
+      .fade-up.delay-3 { animation-delay: 360ms; }
+      .fade-up.delay-4 { animation-delay: 480ms; }
+      @media (prefers-reduced-motion: reduce) {
+        .fade-up { animation: none; opacity: 1; transform: none; }
+      }
+    </style>
   </head>
   <body class="min-h-screen bg-slate-950 text-slate-100">
     ${body}
@@ -385,8 +409,8 @@ app.get("/", (req, res) => {
   const body = `
     ${navbar({ sessionData: req.session, showAuth: true, showLinks: false })}
     <main class="mx-auto w-full max-w-6xl px-6 py-16">
-      <section class="space-y-12">
-        <div class="space-y-6">
+      <section class="space-y-12 fade-up delay-1">
+        <div class="space-y-6 fade-up delay-2">
           <p class="text-xs uppercase tracking-[0.35em] text-emerald-300">Solus</p>
           <h1 class="text-4xl font-semibold leading-tight text-white md:text-6xl">
             The robotics development environment built for real-world complexity.
@@ -418,7 +442,7 @@ app.get("/", (req, res) => {
             </div>
           </div>
         </div>
-        <div class="rounded-3xl border border-white/10 bg-white/5 p-6">
+        <div class="rounded-3xl border border-white/10 bg-white/5 p-6 fade-up delay-3">
           <div class="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
             <div class="flex items-center justify-between border-b border-white/10 pb-3">
               <div class="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
@@ -456,7 +480,7 @@ app.get("/", (req, res) => {
         </div>
       </section>
 
-      <section class="mt-20 grid gap-10 border-t border-white/10 pt-12 lg:grid-cols-[1fr_1fr]">
+      <section class="mt-20 grid gap-10 border-t border-white/10 pt-12 lg:grid-cols-[1fr_1fr] fade-up delay-2">
         <div>
           <p class="text-xs uppercase tracking-[0.35em] text-emerald-300">Why now</p>
           <h2 class="mt-4 text-3xl font-semibold text-white">Robotics is accelerating. Tooling has to keep up.</h2>
@@ -475,7 +499,7 @@ app.get("/", (req, res) => {
         </div>
       </section>
 
-      <section class="mt-20 flex flex-col items-start justify-between gap-6 border-t border-white/10 pt-12 md:flex-row md:items-center">
+      <section class="mt-20 flex flex-col items-start justify-between gap-6 border-t border-white/10 pt-12 md:flex-row md:items-center fade-up delay-3">
         <div>
           <p class="text-xs uppercase tracking-[0.35em] text-emerald-300">Forge</p>
           <h2 class="mt-3 text-3xl font-semibold text-white">A robotics development environment built for teams.</h2>
@@ -495,6 +519,8 @@ app.get("/", (req, res) => {
 
 app.get("/login", (req, res) => {
   const message = req.query.message ? String(req.query.message) : "";
+  const resend = req.query.resend === "1";
+  const resendEmail = req.query.email ? String(req.query.email) : "";
   const body = `
     ${navbar({ sessionData: req.session, showAuth: false, showLinks: false })}
     <main class="mx-auto flex w-full max-w-3xl flex-col gap-10 px-6 py-16">
@@ -505,6 +531,17 @@ app.get("/login", (req, res) => {
         ${
           message
             ? `<div class="mt-6 rounded-2xl border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">${message}</div>`
+            : ""
+        }
+        ${
+          resend
+            ? `<form method="POST" action="/auth/resend" class="mt-4 flex flex-wrap items-center gap-3">
+                <input type="hidden" name="email" value="${resendEmail}" />
+                <button class="rounded-full border border-white/20 px-4 py-2 text-xs font-semibold text-white/80 transition hover:border-white hover:text-white">
+                  Resend confirmation email
+                </button>
+                <span class="text-xs text-slate-400">We’ll send a fresh confirmation link.</span>
+              </form>`
             : ""
         }
       </div>
@@ -563,6 +600,96 @@ app.get("/download", (req, res) => {
   `;
 
   res.send(layout({ title: "Download Forge | Solus", body }));
+});
+
+app.get("/auth/confirm", (req, res) => {
+  const error = req.query.error ? String(req.query.error) : "";
+  const body = `
+    ${navbar({ sessionData: req.session, showAuth: true, showLinks: false })}
+    <main class="mx-auto flex min-h-[60vh] w-full max-w-3xl items-center px-6 py-16">
+      <div class="w-full rounded-3xl border border-white/10 bg-white/5 p-10 text-center">
+        <p class="text-xs uppercase tracking-[0.35em] text-emerald-300">Forge RDE</p>
+        <h1 class="mt-3 text-3xl font-semibold text-white">Confirming your email…</h1>
+        <p class="mt-3 text-slate-300">
+          We’re finalizing your account. You’ll be redirected automatically.
+        </p>
+        ${
+          error
+            ? `<div class="mt-6 rounded-2xl border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">Confirmation failed: ${error}</div>`
+            : ""
+        }
+      </div>
+    </main>
+    <script>
+      (function () {
+        const hash = window.location.hash?.replace(/^#/, "");
+        if (!hash) {
+          window.location.replace("/login?message=Email%20confirmed.%20Please%20sign%20in.");
+          return;
+        }
+        const params = new URLSearchParams(hash);
+        const accessToken = params.get("access_token");
+        const refreshToken = params.get("refresh_token");
+        if (!accessToken) {
+          window.location.replace("/login?message=Email%20confirmed.%20Please%20sign%20in.");
+          return;
+        }
+        fetch("/auth/confirm/complete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          })
+        })
+          .then(() => {
+            window.location.replace("/home");
+          })
+          .catch(() => {
+            window.location.replace("/login?message=Please%20sign%20in.");
+          });
+      })();
+    </script>
+  `;
+
+  res.send(layout({ title: "Confirm Email | Solus", body }));
+});
+
+app.post("/auth/confirm/complete", async (req, res) => {
+  const { access_token, refresh_token } = req.body || {};
+  if (!access_token) {
+    res.status(400).json({ ok: false });
+    return;
+  }
+
+  try {
+    const userClient = createClient(SUPABASE_URL || "", apiKey, {
+      auth: { persistSession: false, detectSessionInUrl: false }
+    });
+    const { data, error } = await userClient.auth.getUser(access_token);
+    if (error) {
+      res.status(400).json({ ok: false });
+      return;
+    }
+
+    req.session.user = data.user;
+    req.session.profile = {
+      first_name: data.user?.user_metadata?.first_name || ""
+    };
+    req.session.access_token = access_token;
+    req.session.refresh_token = refresh_token || "";
+    req.session.githubConnected = await resolveGithubIdentity(req.session);
+    if (req.session.githubConnected) {
+      const stored = await loadGithubTokens(data.user?.id);
+      if (stored?.provider_token) {
+        req.session.githubToken = stored.provider_token;
+      }
+    }
+
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ ok: false });
+  }
 });
 
 app.get("/signup", (req, res) => {
@@ -1099,6 +1226,14 @@ app.post("/auth/login", async (req, res) => {
     });
 
     if (error) {
+      if (String(error.message || "").toLowerCase().includes("email not confirmed")) {
+        res.redirect(
+          `/login?message=${encodeURIComponent(
+            error.message
+          )}&resend=1&email=${encodeURIComponent(email)}`
+        );
+        return;
+      }
       res.redirect(`/login?message=${encodeURIComponent(error.message)}`);
       return;
     }
@@ -1130,6 +1265,7 @@ app.post("/auth/signup", async (req, res) => {
       email,
       password,
       options: {
+        emailRedirectTo: EMAIL_CONFIRM_REDIRECT,
         data: {
           first_name
         }
@@ -1156,6 +1292,33 @@ app.post("/auth/signup", async (req, res) => {
     );
   } catch (err) {
     res.redirect(`/signup?message=${encodeURIComponent("Signup failed")}`);
+  }
+});
+
+app.post("/auth/resend", async (req, res) => {
+  const email = String(req.body.email || "").trim();
+  if (!email) {
+    res.redirect("/login?message=Email%20is%20required%20to%20resend");
+    return;
+  }
+
+  try {
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email,
+      options: {
+        emailRedirectTo: EMAIL_CONFIRM_REDIRECT
+      }
+    });
+
+    if (error) {
+      res.redirect(`/login?message=${encodeURIComponent(error.message)}`);
+      return;
+    }
+
+    res.redirect("/login?message=Confirmation%20email%20resent");
+  } catch (err) {
+    res.redirect("/login?message=Unable%20to%20resend%20confirmation%20email");
   }
 });
 
