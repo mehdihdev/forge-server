@@ -804,14 +804,14 @@ app.get("/home", async (req, res) => {
   const body = `
     ${navbar({ sessionData: req.session, showAuth: false, showLinks: false })}
     <main class="mx-auto w-full max-w-5xl px-6 py-16">
-      <div class="flex flex-col gap-8 rounded-3xl border border-white/10 bg-white/5 p-10">
-        <div>
+      <div class="flex flex-col gap-8 rounded-3xl border border-white/10 bg-white/5 p-10 fade-up delay-1">
+        <div class="fade-up delay-2">
           <p class="text-sm uppercase tracking-[0.2em] text-emerald-300">Welcome back</p>
           <h1 class="mt-3 text-3xl font-semibold text-white">${firstName}</h1>
           <p class="mt-4 text-slate-300">Welcome Back to Forge RDE. Connect GitHub to sync recent projects.</p>
         </div>
 
-        <section class="rounded-3xl border border-white/10 bg-slate-950/70 p-8">
+        <section class="rounded-3xl border border-white/10 bg-slate-950/70 p-8 fade-up delay-3">
           <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <h2 class="text-xl font-semibold text-white">GitHub connection</h2>
@@ -945,8 +945,8 @@ app.get("/settings", (req, res) => {
   const body = `
     ${navbar({ sessionData: req.session, showAuth: false, showLinks: false })}
     <main class="mx-auto w-full max-w-4xl px-6 py-16">
-      <div class="flex flex-col gap-8 rounded-3xl border border-white/10 bg-white/5 p-10">
-        <div>
+      <div class="flex flex-col gap-8 rounded-3xl border border-white/10 bg-white/5 p-10 fade-up delay-1">
+        <div class="fade-up delay-2">
           <p class="text-sm uppercase tracking-[0.2em] text-emerald-300">Settings</p>
           <h1 class="mt-3 text-3xl font-semibold text-white">Account settings</h1>
           <p class="mt-3 text-slate-300">Manage your profile, security, and integrations.</p>
@@ -957,7 +957,7 @@ app.get("/settings", (req, res) => {
           }
         </div>
 
-        <section class="rounded-3xl border border-white/10 bg-slate-950/70 p-8">
+        <section class="rounded-3xl border border-white/10 bg-slate-950/70 p-8 fade-up delay-3">
           <h2 class="text-xl font-semibold text-white">Profile</h2>
           <form method="POST" action="/settings/profile" class="mt-6 grid gap-4 md:grid-cols-[1fr_auto]">
             <div>
@@ -970,7 +970,7 @@ app.get("/settings", (req, res) => {
           </form>
         </section>
 
-        <section class="rounded-3xl border border-white/10 bg-slate-950/70 p-8">
+        <section class="rounded-3xl border border-white/10 bg-slate-950/70 p-8 fade-up delay-3">
           <h2 class="text-xl font-semibold text-white">Security</h2>
           <form method="POST" action="/settings/password" class="mt-6 grid gap-4">
             <div>
@@ -983,7 +983,7 @@ app.get("/settings", (req, res) => {
           </form>
         </section>
 
-        <section class="rounded-3xl border border-white/10 bg-slate-950/70 p-8">
+        <section class="rounded-3xl border border-white/10 bg-slate-950/70 p-8 fade-up delay-3">
           <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <h2 class="text-xl font-semibold text-white">GitHub integration</h2>
@@ -1003,7 +1003,7 @@ app.get("/settings", (req, res) => {
           </div>
         </section>
 
-        <section class="rounded-3xl border border-rose-500/40 bg-rose-500/5 p-8">
+        <section class="rounded-3xl border border-rose-500/40 bg-rose-500/5 p-8 fade-up delay-4">
           <h2 class="text-xl font-semibold text-white">Delete account</h2>
           <p class="mt-2 text-sm text-slate-300">
             This will permanently delete your account and all associated data.
