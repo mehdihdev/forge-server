@@ -78,6 +78,21 @@ const layout = ({ title, body }) => `<!doctype html>
   </head>
   <body class="min-h-screen bg-slate-950 text-slate-100">
     ${body}
+    <footer class="mt-16 border-t border-white/10">
+      <div class="mx-auto w-full max-w-6xl px-6 py-10 text-sm text-slate-400">
+        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div class="flex items-center gap-3 text-white">
+            <div class="h-8 w-8 rounded-lg bg-gradient-to-br from-emerald-400 via-cyan-400 to-blue-500"></div>
+            <span class="text-sm font-semibold">Solus</span>
+          </div>
+          <div class="flex flex-wrap gap-6">
+            <a class="transition hover:text-white" href="/download">Download Forge</a>
+            <a class="transition hover:text-white" href="/login">Login</a>
+          </div>
+        </div>
+        <p class="mt-6 text-xs text-slate-500">© 2026 Solus. All rights reserved.</p>
+      </div>
+    </footer>
   </body>
 </html>`;
 
@@ -125,22 +140,14 @@ const navbar = ({ sessionData, showAuth = true, showLinks = true }) => {
       ? `<a href="/login" class="rounded-full bg-white px-5 py-2 text-sm font-semibold text-slate-900 transition hover:-translate-y-0.5 hover:shadow-lg">Login</a>`
       : "";
 
-  const navLinks = showLinks
-    ? `
-      <nav class="hidden items-center gap-8 text-sm text-slate-300 md:flex">
-        <a class="transition hover:text-white" href="#platform">Platform</a>
-        <a class="transition hover:text-white" href="#research">Research</a>
-        <a class="transition hover:text-white" href="#security">Security</a>
-      </nav>
-    `
-    : "";
+  const navLinks = "";
 
   return `
     <header class="sticky top-0 z-10 border-b border-white/10 bg-slate-950/70 backdrop-blur">
       <div class="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
         <a href="${brandHref}" class="flex items-center gap-3">
           <div class="h-9 w-9 rounded-lg bg-gradient-to-br from-emerald-400 via-cyan-400 to-blue-500"></div>
-          <span class="text-lg font-semibold tracking-tight">Solus Labs</span>
+          <span class="text-lg font-semibold tracking-tight">Solus</span>
         </a>
         ${navLinks}
         ${authSection}
@@ -376,114 +383,114 @@ const clearGithubTokens = async (userId) => {
 
 app.get("/", (req, res) => {
   const body = `
-    ${navbar({ sessionData: req.session, showAuth: true, showLinks: true })}
+    ${navbar({ sessionData: req.session, showAuth: true, showLinks: false })}
     <main class="mx-auto w-full max-w-6xl px-6 py-16">
-      <section class="grid gap-12 lg:grid-cols-[1.1fr_0.9fr]">
-        <div>
-          <p class="mb-4 text-sm uppercase tracking-[0.2em] text-emerald-300">Solus Labs</p>
+      <section class="space-y-12">
+        <div class="space-y-6">
+          <p class="text-xs uppercase tracking-[0.35em] text-emerald-300">Solus</p>
           <h1 class="text-4xl font-semibold leading-tight text-white md:text-6xl">
-            Build quieter, safer, and smarter systems for a resilient world.
+            The robotics development environment built for real-world complexity.
           </h1>
-          <p class="mt-6 text-lg text-slate-300">
-            Solus Labs crafts adaptive infrastructure for teams operating in complex environments. We pair rigorous research with practical tooling to keep your operations trusted, verifiable, and ahead of the curve.
+          <p class="text-lg text-slate-300">
+            Forge is our RDE: a unified workspace for mechanical, electrical, software, and simulation context.
+            We remove environment setup chaos, make context portable, and help robotics teams ship faster.
           </p>
-          <div class="mt-8 flex flex-wrap items-center gap-4">
-            <a href="/login" class="rounded-full bg-emerald-400 px-6 py-3 text-sm font-semibold text-slate-900 transition hover:-translate-y-0.5 hover:shadow-lg">
-              Get started
+          <div class="flex flex-wrap items-center gap-4">
+            <a href="/download" class="rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:-translate-y-0.5 hover:shadow-lg">
+              Get Forge
             </a>
             <button class="rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-white/80 transition hover:border-white hover:text-white">
-              Request a demo
+              Watch the demo
             </button>
           </div>
-          <div class="mt-10 grid gap-4 text-sm text-slate-300 md:grid-cols-3">
+          <div class="grid gap-4 pt-4 text-sm text-slate-300 md:grid-cols-3">
             <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <p class="text-2xl font-semibold text-white">98%</p>
-              <p>signal clarity across complex telemetry.</p>
+              <p class="text-base font-semibold text-white">Fast setup</p>
+              <p class="mt-2">Eliminate weeks of environment mismatches and SDK issues.</p>
             </div>
             <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <p class="text-2xl font-semibold text-white">24/7</p>
-              <p>continuous compliance monitoring.</p>
+              <p class="text-base font-semibold text-white">Full context</p>
+              <p class="mt-2">Mechanical, electrical, software, and simulation in one place.</p>
             </div>
             <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <p class="text-2xl font-semibold text-white">3x</p>
-              <p>faster incident resolution.</p>
+              <p class="text-base font-semibold text-white">Team-ready</p>
+              <p class="mt-2">Built with labs and robotics teams, shipping now.</p>
             </div>
           </div>
         </div>
-        <div class="relative">
-          <div class="absolute -inset-4 rounded-3xl bg-gradient-to-br from-emerald-500/40 via-cyan-500/10 to-blue-600/40 blur-2xl"></div>
-          <div class="relative rounded-3xl border border-white/10 bg-white/5 p-8">
-            <div class="flex items-center justify-between">
-              <p class="text-sm text-emerald-200">Solus Navigator</p>
-              <span class="rounded-full border border-white/10 px-3 py-1 text-xs text-white/70">Live</span>
-            </div>
-            <div class="mt-6 space-y-4">
-              <div class="rounded-2xl border border-white/10 bg-slate-950/80 p-4">
-                <p class="text-xs uppercase tracking-[0.25em] text-slate-400">Risk Posture</p>
-                <p class="mt-2 text-2xl font-semibold text-white">Stable</p>
-                <p class="mt-2 text-sm text-slate-400">Adaptive policies updated 6 minutes ago.</p>
+        <div class="rounded-3xl border border-white/10 bg-white/5 p-6">
+          <div class="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
+            <div class="flex items-center justify-between border-b border-white/10 pb-3">
+              <div class="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
+                <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+                Forge workspace
               </div>
-              <div class="rounded-2xl border border-white/10 bg-slate-950/80 p-4">
-                <p class="text-xs uppercase tracking-[0.25em] text-slate-400">Signal Mesh</p>
-                <p class="mt-2 text-2xl font-semibold text-white">12.4k streams</p>
-                <p class="mt-2 text-sm text-slate-400">Realtime verification across 32 regions.</p>
-              </div>
+              <span class="text-xs text-slate-500">Preview</span>
             </div>
-            <div class="mt-6 rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900 to-slate-950 p-4">
-              <p class="text-xs uppercase tracking-[0.25em] text-slate-400">Next Action</p>
-              <p class="mt-2 text-sm text-white">Review quantum-ready policy pack for finance cluster.</p>
+            <div class="mt-4 grid gap-4 lg:grid-cols-[220px_1fr]">
+              <div class="rounded-xl border border-white/10 bg-slate-900/80 p-4">
+                <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Lab stack</p>
+                <div class="mt-3 space-y-2 text-sm text-slate-300">
+                  <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">Environment</div>
+                  <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">Simulation</div>
+                  <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">Electrical</div>
+                  <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">Controls</div>
+                </div>
+              </div>
+              <div class="space-y-3">
+                <div class="rounded-xl border border-white/10 bg-white/5 p-4">
+                  <p class="text-sm font-semibold text-white">Project context</p>
+                  <p class="mt-2 text-sm text-slate-300">Mechanical, electrical, software, and sim references in one surface.</p>
+                </div>
+                <div class="rounded-xl border border-white/10 bg-white/5 p-4">
+                  <p class="text-sm font-semibold text-white">Errors & fixes</p>
+                  <p class="mt-2 text-sm text-slate-300">errors.forge captures problems and solutions across the team.</p>
+                </div>
+                <div class="rounded-xl border border-white/10 bg-white/5 p-4">
+                  <p class="text-sm font-semibold text-white">Deployment status</p>
+                  <p class="mt-2 text-sm text-slate-300">Sync with your robotics stack in minutes.</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section id="platform" class="mt-20 grid gap-6 md:grid-cols-3">
-        <div class="rounded-3xl border border-white/10 bg-white/5 p-6">
-          <h3 class="text-xl font-semibold text-white">Signal Intelligence</h3>
-          <p class="mt-3 text-sm text-slate-300">Unify telemetry from edge, cloud, and human sources into a cohesive operating picture.</p>
-        </div>
-        <div class="rounded-3xl border border-white/10 bg-white/5 p-6">
-          <h3 class="text-xl font-semibold text-white">Adaptive Controls</h3>
-          <p class="mt-3 text-sm text-slate-300">Dynamic guardrails that adjust in real time to protect mission-critical flows.</p>
-        </div>
-        <div class="rounded-3xl border border-white/10 bg-white/5 p-6">
-          <h3 class="text-xl font-semibold text-white">Assured Delivery</h3>
-          <p class="mt-3 text-sm text-slate-300">Verified deployment pipelines with continuous compliance and rapid rollback.</p>
-        </div>
-      </section>
-
-      <section id="research" class="mt-20 grid gap-6 rounded-3xl border border-white/10 bg-gradient-to-br from-emerald-500/10 via-slate-900 to-slate-950 p-10">
+      <section class="mt-20 grid gap-10 border-t border-white/10 pt-12 lg:grid-cols-[1fr_1fr]">
         <div>
-          <h2 class="text-3xl font-semibold text-white">Research-led infrastructure</h2>
+          <p class="text-xs uppercase tracking-[0.35em] text-emerald-300">Why now</p>
+          <h2 class="mt-4 text-3xl font-semibold text-white">Robotics is accelerating. Tooling has to keep up.</h2>
           <p class="mt-4 text-slate-300">
-            Our research lab partners with operators, policy teams, and security experts to translate frontier advances into deployable tooling. From cryptographic assurance to autonomous recovery, Solus Labs is the quiet engine behind resilient systems.
+            We’re pairing robotics expertise with modern AI to help teams ship faster, safer, and with less
+            operational drag.
           </p>
         </div>
-        <div class="grid gap-6 md:grid-cols-2">
-          <div class="rounded-2xl border border-white/10 bg-slate-950/60 p-6">
-            <p class="text-sm text-emerald-200">Autonomous Recovery</p>
-            <p class="mt-3 text-sm text-slate-300">Self-healing workflows for complex operational environments.</p>
-          </div>
-          <div class="rounded-2xl border border-white/10 bg-slate-950/60 p-6">
-            <p class="text-sm text-emerald-200">Trustworthy AI</p>
-            <p class="mt-3 text-sm text-slate-300">Verified reasoning layers that keep AI decisioning safe and auditable.</p>
-          </div>
+        <div>
+          <p class="text-xs uppercase tracking-[0.35em] text-emerald-300">Why us</p>
+          <h2 class="mt-4 text-3xl font-semibold text-white">Operators, builders, and researchers.</h2>
+          <p class="mt-4 text-slate-300">
+            Our team blends robotics, full‑stack engineering, AI, and go‑to‑market execution with deep industry
+            relationships to build what labs actually need.
+          </p>
         </div>
       </section>
 
-      <section id="security" class="mt-20 flex flex-col gap-6 rounded-3xl border border-white/10 bg-white/5 p-10 md:flex-row md:items-center md:justify-between">
+      <section class="mt-20 flex flex-col items-start justify-between gap-6 border-t border-white/10 pt-12 md:flex-row md:items-center">
         <div>
-          <h2 class="text-3xl font-semibold text-white">Security-first by design</h2>
-          <p class="mt-4 text-slate-300">Zero trust, hardware-rooted identity, and constant validation for every workload.</p>
+          <p class="text-xs uppercase tracking-[0.35em] text-emerald-300">Forge</p>
+          <h2 class="mt-3 text-3xl font-semibold text-white">A robotics development environment built for teams.</h2>
+          <p class="mt-4 max-w-2xl text-slate-300">
+            A single environment for setup, context, debugging, and deployment across robotics workflows.
+          </p>
         </div>
         <a href="/login" class="rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:-translate-y-0.5 hover:shadow-lg">
-          Secure access
+          Request access
         </a>
       </section>
     </main>
   `;
 
-  res.send(layout({ title: "Solus Labs", body }));
+  res.send(layout({ title: "Solus", body }));
 });
 
 app.get("/login", (req, res) => {
@@ -493,7 +500,7 @@ app.get("/login", (req, res) => {
     <main class="mx-auto flex w-full max-w-3xl flex-col gap-10 px-6 py-16">
       <div>
         <p class="text-sm uppercase tracking-[0.2em] text-emerald-300">Secure access</p>
-        <h1 class="mt-3 text-3xl font-semibold text-white">Sign in to Solus Labs</h1>
+        <h1 class="mt-3 text-3xl font-semibold text-white">Sign in to Forge RDE</h1>
         <p class="mt-3 text-slate-300">Access your personalized homepage and workflows.</p>
         ${
           message
@@ -514,7 +521,48 @@ app.get("/login", (req, res) => {
     </main>
   `;
 
-  res.send(layout({ title: "Login | Solus Labs", body }));
+  res.send(layout({ title: "Login | Solus", body }));
+});
+
+app.get("/download", (req, res) => {
+  const body = `
+    ${navbar({ sessionData: req.session, showAuth: true, showLinks: false })}
+    <main class="mx-auto w-full max-w-4xl px-6 py-16">
+      <div class="flex flex-col gap-10 rounded-3xl border border-white/10 bg-white/5 p-10">
+        <div>
+          <p class="text-xs uppercase tracking-[0.35em] text-emerald-300">Forge RDE</p>
+          <h1 class="mt-3 text-3xl font-semibold text-white">Download Forge</h1>
+          <p class="mt-3 text-slate-300">
+            Get the Forge RDE VS Code extension to capture full project context and automatically create
+            <span class="text-white">errors.forge</span>.
+          </p>
+        </div>
+        <div class="grid gap-6 md:grid-cols-2">
+          <div class="rounded-2xl border border-white/10 bg-slate-950/70 p-6">
+            <p class="text-sm font-semibold text-white">Install via VS Code Marketplace</p>
+            <p class="mt-3 text-sm text-slate-300">
+              Search for <span class="text-white">Forge RDE</span> inside VS Code extensions.
+            </p>
+            <div class="mt-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-400">
+              Extensions → Search → Forge RDE → Install
+            </div>
+          </div>
+          <div class="rounded-2xl border border-white/10 bg-slate-950/70 p-6">
+            <p class="text-sm font-semibold text-white">Get started</p>
+            <p class="mt-3 text-sm text-slate-300">
+              Run the command <span class="text-white">RDE: Repository Visualizer</span> to generate your
+              first <span class="text-white">errors.forge</span>.
+            </p>
+            <div class="mt-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-400">
+              Command Palette → RDE: Repository Visualizer
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  `;
+
+  res.send(layout({ title: "Download Forge | Solus", body }));
 });
 
 app.get("/signup", (req, res) => {
@@ -524,7 +572,7 @@ app.get("/signup", (req, res) => {
     <main class="mx-auto flex w-full max-w-3xl flex-col gap-10 px-6 py-16">
       <div>
         <p class="text-sm uppercase tracking-[0.2em] text-emerald-300">Create account</p>
-        <h1 class="mt-3 text-3xl font-semibold text-white">Join Solus Labs</h1>
+        <h1 class="mt-3 text-3xl font-semibold text-white">Create your Forge RDE Account</h1>
         <p class="mt-3 text-slate-300">Start with your first name, email, and a secure password.</p>
         ${
           message
@@ -548,7 +596,7 @@ app.get("/signup", (req, res) => {
     </main>
   `;
 
-  res.send(layout({ title: "Sign up | Solus Labs", body }));
+  res.send(layout({ title: "Sign up | Solus", body }));
 });
 
 app.get("/home", async (req, res) => {
@@ -633,7 +681,7 @@ app.get("/home", async (req, res) => {
         <div>
           <p class="text-sm uppercase tracking-[0.2em] text-emerald-300">Welcome back</p>
           <h1 class="mt-3 text-3xl font-semibold text-white">${firstName}</h1>
-          <p class="mt-4 text-slate-300">Your Solus Labs workspace is ready. Connect GitHub to sync recent projects.</p>
+          <p class="mt-4 text-slate-300">Welcome Back to Forge RDE. Connect GitHub to sync recent projects.</p>
         </div>
 
         <section class="rounded-3xl border border-white/10 bg-slate-950/70 p-8">
@@ -757,7 +805,7 @@ app.get("/home", async (req, res) => {
     </script>
   `;
 
-  res.send(layout({ title: "Home | Solus Labs", body }));
+  res.send(layout({ title: "Home | Solus", body }));
 });
 
 app.get("/settings", (req, res) => {
@@ -841,7 +889,7 @@ app.get("/settings", (req, res) => {
     </main>
   `;
 
-  res.send(layout({ title: "Settings | Solus Labs", body }));
+  res.send(layout({ title: "Settings | Solus", body }));
 });
 
 app.get("/repo/select", (req, res) => {
@@ -954,7 +1002,7 @@ app.get("/repo/:owner/:repo", async (req, res) => {
         </main>
       `;
 
-      res.send(layout({ title: `${repoData.full_name} | Solus Labs`, body }));
+      res.send(layout({ title: `${repoData.full_name} | Solus`, body }));
       return;
     } catch (err) {
       if (err?.status !== 401) {
@@ -1035,7 +1083,7 @@ app.get("/repo/:owner/:repo", async (req, res) => {
       </main>
     `;
 
-    res.send(layout({ title: `${repoData.full_name} | Solus Labs`, body }));
+    res.send(layout({ title: `${repoData.full_name} | Solus`, body }));
   } catch (err) {
     res.redirect("/home?message=Unable%20to%20load%20repository");
   }
@@ -1435,5 +1483,5 @@ app.post("/auth/logout", async (req, res) => {
 });
 
 app.listen(Number(PORT), () => {
-  console.log(`Solus Labs server listening on http://localhost:${PORT}`);
+  console.log(`Solus server listening on http://localhost:${PORT}`);
 });
