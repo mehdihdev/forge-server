@@ -423,9 +423,14 @@ app.get("/", (req, res) => {
             <a href="/download" class="rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:-translate-y-0.5 hover:shadow-lg">
               Get Forge
             </a>
-            <button class="rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-white/80 transition hover:border-white hover:text-white">
+            <a
+              href="https://drive.google.com/file/d/1sX1pnNWdyErCdN0MiOdP60TlKQMfLoY8/view?usp=sharing"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-white/80 transition hover:border-white hover:text-white"
+            >
               Watch the demo
-            </button>
+            </a>
           </div>
           <div class="grid gap-4 pt-4 text-sm text-slate-300 md:grid-cols-3">
             <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
