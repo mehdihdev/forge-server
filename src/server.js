@@ -424,7 +424,7 @@ app.get("/", (req, res) => {
               Get Forge
             </a>
             <a
-              href="https://drive.google.com/file/d/1sX1pnNWdyErCdN0MiOdP60TlKQMfLoY8/view?usp=sharing"
+              href="https://youtu.be/qszQ76kajuM"
               target="_blank"
               rel="noopener noreferrer"
               class="rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-white/80 transition hover:border-white hover:text-white"
